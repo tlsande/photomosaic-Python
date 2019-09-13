@@ -5,9 +5,9 @@ from os import walk
 import os
 import time
 import numpy as np
-import threading
 import multiprocessing
 import sys
+import csv
 
 imageProcessed = "images/processed/"
 
@@ -36,7 +36,6 @@ def splitList(list):
 def processImages(locations, num):
     start = time.time()
     for i in range(0, len(locations)):
-        # Remove check from here and add it to for loop that gets locations
         if locations[i].endswith(('.png', '.jpg', '.gif')):
             img = Image.open(locations[i])
             img = img.resize((64, 64))
@@ -76,11 +75,28 @@ def averageRGB(location):
     # return r, g, b
 
 def writeCache(pLocation):
+    csvFile = open('cache.csv', 'w')
+    writer = csv.writer(csvFile)
     locations = getAllPaths(pLocation)
     # locations = getBasePaths(pLocation)
     for i in locations:
-        print(i)
-        print(averageRGB(i))
+        # print(i)
+        # print(averageRGB(i))
+        R, G, B = averageRGB(i)
+        writer.writerow((i, R, G, B))
+    csvFile.close()
+
+def loadCache():
+    with open('cache.csv') as csvFile:
+        csvReader = csv.reader(csvFile, delimiter=',')
+        locations = []
+        averages = []
+        for row in csvReader:
+            locations.append(row[0])
+            averages.append((row[1], row[2], row[3]))
+        for i in range(len(locations)):
+            print(locations[i], " ", averages[i])
+
 
 if __name__ == '__main__':
     locations = getAllPaths(sys.argv[1])
@@ -103,12 +119,4 @@ if __name__ == '__main__':
         p[i].join()
 
     writeCache(imageProcessed)
-
-    # colors = []
-    # start = time.time()
-    # locations = getAllPaths(imageProcessed)
-    # for i in locations:
-    #     if i.endswith(('.png', '.jpg', '.gif')):
-    #         colors.append(averageRGB(i))
-    # end = time.time()
-    # print("Runtime: ", end - start)
+    loadCache()
