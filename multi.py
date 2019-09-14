@@ -69,9 +69,16 @@ def averageRGB(location):
     # print(np.round(np.array(img).mean(axis=(0, 1))))
     # end = time.time()
     # print("Second: ", end - start)
-
-    # print(np.round(np.array(img).mean(axis=(1))))
-    return np.round(np.array(img).mean(axis=(0,1)))
+    r, g, b, = np.round(np.array(img).mean(axis=(0, 1)))
+    r = int(r)
+    g = int(g)
+    b = int(b)
+    # print(r, g, b)
+    return r, g, b
+    # print(np.round(np.array(img).mean(axis=(0, 1))))
+    # return np.round(np.array(img).mean(axis=(0,1)))
+    # print(np.rint(np.array(img).mean(axis=(0,1))))
+    # return np.rint(np.array(img).mean(axis=(0,1)))
     # return r, g, b
 
 def writeCache(pLocation):
@@ -93,9 +100,26 @@ def loadCache():
         averages = []
         for row in csvReader:
             locations.append(row[0])
-            averages.append((row[1], row[2], row[3]))
-        for i in range(len(locations)):
-            print(locations[i], " ", averages[i])
+            # averages.append((int(float(row[1])), int(float(row[2])), int(float(row[3]))))
+            averages.append((int(row[1]), int(row[2]), int(row[3])))
+        # for i in range(len(locations)):
+        #     print(i)
+        return locations, averages
+
+# def distance(color1, color2):
+#     return np.linalg.norm(color1 - color2)
+#
+# # Basic search for now, might add option for top n cloest as to no reuse images too much
+# def closestColor(pix):
+#     locations, averages = loadCache()
+#     min = None
+#     closestLocation = ""
+#     for i in range(len(locations)):
+#         if distance(pix, averages[i] < min) or min is None:
+#             min = distance(pix, averages[i])
+#             closestLocation = locations[i]
+#             print(min)
+#             print(closestLocation)
 
 
 if __name__ == '__main__':
@@ -119,4 +143,10 @@ if __name__ == '__main__':
         p[i].join()
 
     writeCache(imageProcessed)
-    loadCache()
+    newLocations, average = loadCache()
+
+    # img = Image.open("images/source/test/test1.png")
+    # # closestColor(img.getpixel((500, 500)))
+    # p1 = average[20]
+    # p2 = img.getpixel((500,500))
+    # print(distance(p1, p2))
