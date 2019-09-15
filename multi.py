@@ -10,6 +10,7 @@ import sys
 import csv
 
 imageProcessed = "images/processed/"
+defaultOutputPath = "images/output/"
 
 def getAllPaths(directory):
     directories = []
@@ -32,7 +33,7 @@ def splitList(list):
     half = len(list) // 2
     return list[:half], list[half:]
 
-
+# Todo Add blocksize
 def processImages(locations, num):
     start = time.time()
     for i in range(0, len(locations)):
@@ -101,26 +102,41 @@ def loadCache():
         for row in csvReader:
             locations.append(row[0])
             # averages.append((int(float(row[1])), int(float(row[2])), int(float(row[3]))))
-            averages.append((int(row[1]), int(row[2]), int(row[3])))
+            # averages.append((int(row[1]), int(row[2]), int(row[3])))
+            averages.append(np.array((int(row[1]), int(row[2]), int(row[3]))))
         # for i in range(len(locations)):
         #     print(i)
         return locations, averages
 
-# def distance(color1, color2):
-#     return np.linalg.norm(color1 - color2)
-#
-# # Basic search for now, might add option for top n cloest as to no reuse images too much
-# def closestColor(pix):
-#     locations, averages = loadCache()
-#     min = None
-#     closestLocation = ""
-#     for i in range(len(locations)):
-#         if distance(pix, averages[i] < min) or min is None:
-#             min = distance(pix, averages[i])
-#             closestLocation = locations[i]
-#             print(min)
-#             print(closestLocation)
+def distance(color1, color2):
+    return np.linalg.norm(color1 - color2)
 
+# Todo Basic search for now, might add option for top n cloest as to no reuse images too much
+def closestColor(pix):
+    locations, averages = loadCache()
+    # min = None
+    min = sys.maxsize
+    closestLocation = None
+    for i in range(len(locations)):
+        # if distance(pix, averages[i]) < min or min is None:
+        if distance(pix, averages[i]) < min:
+            min = distance(pix, averages[i])
+            closestLocation = locations[i]
+    return closestLocation
+
+# scaleSize is how much the base image will be scaled down or how much the chunksize of pixel
+# to compare to the source image.
+# blockSize is how big the source images are
+def photoMosaicProcess(location, scaleSize, blockSize):
+    img = Image.open(location).convert('RGB')
+    imgSmall = img.resize((int(img.width / scaleSize), int(img.height / scaleSize)))
+    imgBig = imgSmall.resize((int(imgSmall.width * blockSize), int(imgSmall.height * blockSize)))
+    for x in range(imgSmall.width):
+        for y in range(imgSmall.height):
+            # print(closestColor(np.array(img.getpixel((x,y)))))
+            hello = 0
+    imgSmall.save(defaultOutputPath + "small_" + str(time.time()) + ".png")
+    imgBig.save(defaultOutputPath + "big_" + str(time.time()) + ".png")
 
 if __name__ == '__main__':
     locations = getAllPaths(sys.argv[1])
@@ -145,8 +161,4 @@ if __name__ == '__main__':
     writeCache(imageProcessed)
     newLocations, average = loadCache()
 
-    # img = Image.open("images/source/test/test1.png")
-    # # closestColor(img.getpixel((500, 500)))
-    # p1 = average[20]
-    # p2 = img.getpixel((500,500))
-    # print(distance(p1, p2))
+    # photoMosaicProcess(sys.argv[1], 16, 16)
