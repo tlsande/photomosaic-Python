@@ -85,7 +85,7 @@ def averageRGB(location):
     # return r, g, b
 
 def writeCache(pLocation):
-    csvFile = open('cache.csv', 'w')
+    csvFile = open('cache.csv', 'w', newline='')
     writer = csv.writer(csvFile)
     locations = getAllPaths(pLocation)
     # locations = getBasePaths(pLocation)
@@ -104,8 +104,8 @@ def loadCache():
         for row in csvReader:
             locations.append(row[0])
             # averages.append((int(float(row[1])), int(float(row[2])), int(float(row[3]))))
-            # averages.append((int(row[1]), int(row[2]), int(row[3])))
-            averages.append(np.array((int(row[1]), int(row[2]), int(row[3]))))
+            averages.append((int(row[1]), int(row[2]), int(row[3])))
+            # averages.append(np.array((int(row[1]), int(row[2]), int(row[3]))))
         # for i in range(len(locations)):
         #     print(i)
         return locations, averages
@@ -124,13 +124,20 @@ def closestColor(pix, locations, averages):
     # min = None
     min = sys.maxsize
     closestLocation = None
+    # start = time.time()
     for i in range(len(locations)):
         # if distance(pix, averages[i]) < min or min is None:
         # temp = np.linalg.norm(pix - averages[i])
-        if distance(pix, averages[i]) < min:
-        # if temp < min:
+        dx = pix[0] - averages[i][0]
+        dy = pix[1] - averages[i][1]
+        dz = pix[2] - averages[i][2]
+        temp = math.sqrt(dx*dx + dy*dy + dz*dz)
+        # if distance(pix, averages[i]) < min:
+        if temp < min:
             min = distance(pix, averages[i])
             closestLocation = locations[i]
+    # end = time.time()
+    # print("closestColor() Runtime: ", end - start)
     return closestLocation
 
 # scaleSize is how much the base image will be scaled down or how much the chunksize of pixel
@@ -138,6 +145,8 @@ def closestColor(pix, locations, averages):
 # blockSize is how big the source images are
 # Todo Add multiprocessing. First test pool map with processImages
 def photoMosaicProcess(location, scaleSize, blockSize):
+    if not os.path.existst(defaultOutputPath):
+        os.mkdir(defaultOutputPath)
     locations, averages = loadCache()
     img = Image.open(location).convert('RGB')
     imgSmall = img.resize((int(img.width / scaleSize), int(img.height / scaleSize)))
@@ -180,18 +189,33 @@ if __name__ == '__main__':
     # for i in range(numThreads):
     #     p[i].join()
     #
-    # writeCache(imageProcessed)
+    writeCache(imageProcessed)
     #
     # photoMosaicProcess(sys.argv[1], blockSize, blockSize)
 
-    photoMosaicProcess(sys.argv[1], 16, 16)
+    # photoMosaicProcess(sys.argv[1], 16, 16)
 
     # locations, averages = loadCache()
     # imgTest = Image.open(sys.argv[1]).convert('RGB')
-    #
+    # #
     # start = time.time()
-    # for x in range(60):
-    #     for y in range(10):
+    # for x in range(50):
+    #     for y in range(50):
     #         closestColor(np.array(imgTest.getpixel((x,y))), locations, averages)
     # end = time.time()
     # print("Runtime: ", end - start)
+
+    # testa1 = [5, 10, 15]
+    # testa2 = [80, 100, 200]
+    # testb1 = np.array((5, 10, 15))
+    # testb2 = np.array((80, 100, 200))
+    #
+    # print(testa1)
+    # print(testa2)
+    # print(testb1)
+    # print(testb2)
+
+    # start = time.time()
+    # for x in range(200):
+    #     for y in range(200):
+    #         dx = (testa1)
