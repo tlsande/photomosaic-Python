@@ -140,41 +140,44 @@ def photoMosaicProcess(location, scaleSize, blockSize):
         for y in range(imgSmall.height):
             # USE IMGSMALL YOU DUMB IDIOT
             # print(closestColor(np.array(imgSmall.getpixel((x,y)))))
-            # closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages)
-            curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages))
-            imgBig.paste(curImg, (x * blockSize, y * blockSize))
+            closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages)
+            # curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages))
+            # imgBig.paste(curImg, (x * blockSize, y * blockSize))
             # hello = 0
     end = time.time()
     print("Runtime: ", end - start)
-    imgBig.save(defaultOutputPath + "mosaic_" + str(time.time()) + ".png")
+    # imgBig.save(defaultOutputPath + "mosaic_" + str(time.time()) + ".png")
 
     # For checking correct scaling
     # imgSmall.save(defaultOutputPath + "small_" + str(time.time()) + ".png")
     # imgBig.save(defaultOutputPath + "big_" + str(time.time()) + ".png")
 
 if __name__ == '__main__':
-    locations = getAllPaths(sys.argv[1])
-    blockSize = sys.argv[2]
-
-    numThreads = multiprocessing.cpu_count()
-
-    splitLocations = np.array_split(locations, numThreads)
-
-    if not os.path.exists(imageProcessed):
-        os.mkdir(imageProcessed)
-
-    num = 0
-    p = []
-    for i in range(numThreads):
-        print(i)
-        p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, 64)))
-        num += len(splitLocations[i])
-        p[i].start()
-    for i in range(numThreads):
-        p[i].join()
-
-    writeCache(imageProcessed)
-
-    photoMosaicProcess(sys.argv[1], blockSize, blockSize)
+    # locations = getAllPaths(sys.argv[1])
+    # blockSize = sys.argv[2]
+    #
+    # numThreads = multiprocessing.cpu_count()
+    #
+    # splitLocations = np.array_split(locations, numThreads)
+    #
+    # if not os.path.exists(imageProcessed):
+    #     os.mkdir(imageProcessed)
+    #
+    # num = 0
+    # p = []
+    # for i in range(numThreads):
+    #     print(i)
+    #     p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, 64)))
+    #     num += len(splitLocations[i])
+    #     p[i].start()
+    # for i in range(numThreads):
+    #     p[i].join()
+    #
+    # writeCache(imageProcessed)
+    #
+    # photoMosaicProcess(sys.argv[1], blockSize, blockSize)
 
     # photoMosaicProcess(sys.argv[1], 16, 16)
+
+    locations, average = loadCache()
+    imgTest = Image.open(sys.argv[1]).conver('RGB')
