@@ -8,6 +8,7 @@ import numpy as np
 import multiprocessing
 import sys
 import csv
+import math
 
 imageProcessed = "images/processed/"
 defaultOutputPath = "images/output/"
@@ -110,7 +111,11 @@ def loadCache():
         return locations, averages
 
 def distance(color1, color2):
-    return np.linalg.norm(color1 - color2)
+    dx = color1[0] - color2[0]
+    dy = color1[1] - color2[1]
+    dz = color1[2] - color2[2]
+    return math.sqrt(dx*dx + dy*dy + dz*dz)
+    # return np.linalg.norm(color1 - color2)
 
 # Todo move loadCache outside of this function. Should only load cache once
 # Todo Basic search for now, might add option for top n cloest as to no reuse images too much
@@ -121,7 +126,9 @@ def closestColor(pix, locations, averages):
     closestLocation = None
     for i in range(len(locations)):
         # if distance(pix, averages[i]) < min or min is None:
+        # temp = np.linalg.norm(pix - averages[i])
         if distance(pix, averages[i]) < min:
+        # if temp < min:
             min = distance(pix, averages[i])
             closestLocation = locations[i]
     return closestLocation
@@ -153,31 +160,38 @@ def photoMosaicProcess(location, scaleSize, blockSize):
     # imgBig.save(defaultOutputPath + "big_" + str(time.time()) + ".png")
 
 if __name__ == '__main__':
-    locations = getAllPaths(sys.argv[1])
-    blockSize = sys.argv[2]
-
-    numThreads = multiprocessing.cpu_count()
-
-    splitLocations = np.array_split(locations, numThreads)
-
-    if not os.path.exists(imageProcessed):
-        os.mkdir(imageProcessed)
-
-    num = 0
-    p = []
-    for i in range(numThreads):
-        print(i)
-        p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, 64)))
-        num += len(splitLocations[i])
-        p[i].start()
-    for i in range(numThreads):
-        p[i].join()
-
-    writeCache(imageProcessed)
-
-    photoMosaicProcess(sys.argv[1], blockSize, blockSize)
+    # locations = getAllPaths(sys.argv[1])
+    # blockSize = sys.argv[2]
+    #
+    # numThreads = multiprocessing.cpu_count()
+    #
+    # splitLocations = np.array_split(locations, numThreads)
+    #
+    # if not os.path.exists(imageProcessed):
+    #     os.mkdir(imageProcessed)
+    #
+    # num = 0
+    # p = []
+    # for i in range(numThreads):
+    #     print(i)
+    #     p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, 64)))
+    #     num += len(splitLocations[i])
+    #     p[i].start()
+    # for i in range(numThreads):
+    #     p[i].join()
+    #
+    # writeCache(imageProcessed)
+    #
+    # photoMosaicProcess(sys.argv[1], blockSize, blockSize)
 
     # photoMosaicProcess(sys.argv[1], 16, 16)
 
-    # locations, average = loadCache()
-    # imgTest = Image.open(sys.argv[1]).conver('RGB')
+    locations, averages = loadCache()
+    imgTest = Image.open(sys.argv[1]).convert('RGB')
+
+    start = time.time()
+    for x in range(60):
+        for y in range(10):
+            closestColor(np.array(imgTest.getpixel((x,y))), locations, averages)
+    end = time.time()
+    print("Runtime: ", end - start)
