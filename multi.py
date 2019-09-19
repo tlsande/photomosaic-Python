@@ -33,13 +33,14 @@ def splitList(list):
     half = len(list) // 2
     return list[:half], list[half:]
 
-# Todo Add blocksize
-def processImages(locations, num):
+# Todo Test converting to pool map instead of manually splitting input array
+# Todo Add progress output
+def processImages(locations, num, blockSize):
     start = time.time()
     for i in range(0, len(locations)):
         if locations[i].endswith(('.png', '.jpg', '.gif')):
             img = Image.open(locations[i])
-            img = img.resize((64, 64))
+            img = img.resize((blockSize, blockSize))
             # img.save(imageProcessed, "test", i + num, ".png")
             # print("test", '{0:04}'.format(i+num), ".png")
             path = imageProcessed + "test" + '{:04d}'.format(i + num) + ".png"
@@ -111,6 +112,7 @@ def loadCache():
 def distance(color1, color2):
     return np.linalg.norm(color1 - color2)
 
+# Todo move loadCache outside of this function. Should only load cache once
 # Todo Basic search for now, might add option for top n cloest as to no reuse images too much
 def closestColor(pix):
     locations, averages = loadCache()
@@ -127,19 +129,30 @@ def closestColor(pix):
 # scaleSize is how much the base image will be scaled down or how much the chunksize of pixel
 # to compare to the source image.
 # blockSize is how big the source images are
+# Todo Add multiprocessing. First test pool map with processImages
 def photoMosaicProcess(location, scaleSize, blockSize):
     img = Image.open(location).convert('RGB')
     imgSmall = img.resize((int(img.width / scaleSize), int(img.height / scaleSize)))
     imgBig = imgSmall.resize((int(imgSmall.width * blockSize), int(imgSmall.height * blockSize)))
+    start = time.time()
     for x in range(imgSmall.width):
         for y in range(imgSmall.height):
-            # print(closestColor(np.array(img.getpixel((x,y)))))
-            hello = 0
-    imgSmall.save(defaultOutputPath + "small_" + str(time.time()) + ".png")
-    imgBig.save(defaultOutputPath + "big_" + str(time.time()) + ".png")
+            # USE IMGSMALL YOU DUMB IDIOT
+            # print(closestColor(np.array(imgSmall.getpixel((x,y)))))
+            curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y)))))
+            imgBig.paste(curImg, (x * blockSize, y * blockSize))
+            # hello = 0
+    end = time.time()
+    print("Runtime: ", end - start)
+    imgBig.save(defaultOutputPath + "mosaic_" + str(time.time()) + ".png")
+
+    # For checking correct scaling
+    # imgSmall.save(defaultOutputPath + "small_" + str(time.time()) + ".png")
+    # imgBig.save(defaultOutputPath + "big_" + str(time.time()) + ".png")
 
 if __name__ == '__main__':
     locations = getAllPaths(sys.argv[1])
+    blockSize = sys.argv[2]
 
     numThreads = multiprocessing.cpu_count()
 
@@ -152,13 +165,14 @@ if __name__ == '__main__':
     p = []
     for i in range(numThreads):
         print(i)
-        p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num)))
+        p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, 64)))
         num += len(splitLocations[i])
         p[i].start()
     for i in range(numThreads):
         p[i].join()
 
     writeCache(imageProcessed)
-    newLocations, average = loadCache()
 
-    # photoMosaicProcess(sys.argv[1], 16, 16)
+    # newLocations, average = loadCache()
+
+    photoMosaicProcess(sys.argv[1], blockSize, blockSize)
