@@ -114,8 +114,8 @@ def distance(color1, color2):
 
 # Todo move loadCache outside of this function. Should only load cache once
 # Todo Basic search for now, might add option for top n cloest as to no reuse images too much
-def closestColor(pix):
-    locations, averages = loadCache()
+def closestColor(pix, locations, averages):
+    # locations, averages = loadCache()
     # min = None
     min = sys.maxsize
     closestLocation = None
@@ -131,6 +131,7 @@ def closestColor(pix):
 # blockSize is how big the source images are
 # Todo Add multiprocessing. First test pool map with processImages
 def photoMosaicProcess(location, scaleSize, blockSize):
+    locations, averages = loadCache()
     img = Image.open(location).convert('RGB')
     imgSmall = img.resize((int(img.width / scaleSize), int(img.height / scaleSize)))
     imgBig = imgSmall.resize((int(imgSmall.width * blockSize), int(imgSmall.height * blockSize)))
@@ -139,7 +140,8 @@ def photoMosaicProcess(location, scaleSize, blockSize):
         for y in range(imgSmall.height):
             # USE IMGSMALL YOU DUMB IDIOT
             # print(closestColor(np.array(imgSmall.getpixel((x,y)))))
-            curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y)))))
+            # closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages)
+            curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages))
             imgBig.paste(curImg, (x * blockSize, y * blockSize))
             # hello = 0
     end = time.time()
@@ -173,6 +175,6 @@ if __name__ == '__main__':
 
     writeCache(imageProcessed)
 
-    # newLocations, average = loadCache()
-
     photoMosaicProcess(sys.argv[1], blockSize, blockSize)
+
+    # photoMosaicProcess(sys.argv[1], 16, 16)
