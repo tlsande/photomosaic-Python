@@ -145,7 +145,7 @@ def closestColor(pix, locations, averages):
 # blockSize is how big the source images are
 # Todo Add multiprocessing. First test pool map with processImages
 def photoMosaicProcess(location, scaleSize, blockSize):
-    if not os.path.existst(defaultOutputPath):
+    if not os.path.exists(defaultOutputPath):
         os.mkdir(defaultOutputPath)
     locations, averages = loadCache()
     img = Image.open(location).convert('RGB')
@@ -157,7 +157,8 @@ def photoMosaicProcess(location, scaleSize, blockSize):
             # USE IMGSMALL YOU DUMB IDIOT
             # print(closestColor(np.array(imgSmall.getpixel((x,y)))))
             # closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages)
-            curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages))
+            # curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages))
+            curImg = Image.open(closestColor(imgSmall.getpixel((x,y)), locations, averages))
             imgBig.paste(curImg, (x * blockSize, y * blockSize))
             # hello = 0
     end = time.time()
@@ -189,11 +190,11 @@ if __name__ == '__main__':
     # for i in range(numThreads):
     #     p[i].join()
     #
-    writeCache(imageProcessed)
+    # writeCache(imageProcessed)
     #
     # photoMosaicProcess(sys.argv[1], blockSize, blockSize)
 
-    # photoMosaicProcess(sys.argv[1], 16, 16)
+    photoMosaicProcess(sys.argv[1], 16, 16)
 
     # locations, averages = loadCache()
     # imgTest = Image.open(sys.argv[1]).convert('RGB')
