@@ -29,11 +29,6 @@ def getBasePaths(directory):
             directories.append(join(directory, i))
     return directories
 
-
-def splitList(list):
-    half = len(list) // 2
-    return list[:half], list[half:]
-
 # Todo Test converting to pool map instead of manually splitting input array
 # Todo Add progress output
 def processImages(locations, num, blockSize):
@@ -42,8 +37,7 @@ def processImages(locations, num, blockSize):
         if locations[i].endswith(('.png', '.jpg', '.gif')):
             img = Image.open(locations[i])
             img = img.resize((blockSize, blockSize))
-            # img.save(imageProcessed, "test", i + num, ".png")
-            # print("test", '{0:04}'.format(i+num), ".png")
+
             path = imageProcessed + "test" + '{:04d}'.format(i + num) + ".png"
             img.save(path)
     end = time.time()
@@ -51,38 +45,13 @@ def processImages(locations, num, blockSize):
 
 def averageRGB(location):
     img = Image.open(location).convert('RGB')
-    # Slower than numpy
-    # r = g = b = a = 0
-    # start = time.time()
-    # for x in range(img.width):
-    #     for y in range(img.height):
-    #         pixr, pixg, pixb = img.getpixel((x, y))
-    #         r += pixr
-    #         g += pixg
-    #         b += pixb
-    #         # a += pixa
-    # r = np.round(r / (img.width * img.height))
-    # g = np.round(g / (img.width * img.height))
-    # b = np.round(b / (img.width * img.height))
-    # end = time.time()
-    # print("First: ", end - start)
-    # print("(", r, ", ", g, ",", b, ")")
 
-    # start = time.time()
-    # print(np.round(np.array(img).mean(axis=(0, 1))))
-    # end = time.time()
-    # print("Second: ", end - start)
     r, g, b, = np.round(np.array(img).mean(axis=(0, 1)))
     r = int(r)
     g = int(g)
     b = int(b)
-    # print(r, g, b)
+
     return r, g, b
-    # print(np.round(np.array(img).mean(axis=(0, 1))))
-    # return np.round(np.array(img).mean(axis=(0,1)))
-    # print(np.rint(np.array(img).mean(axis=(0,1))))
-    # return np.rint(np.array(img).mean(axis=(0,1)))
-    # return r, g, b
 
 def writeCache(pLocation):
     csvFile = open('cache.csv', 'w', newline='')
@@ -90,8 +59,6 @@ def writeCache(pLocation):
     locations = getAllPaths(pLocation)
     # locations = getBasePaths(pLocation)
     for i in locations:
-        # print(i)
-        # print(averageRGB(i))
         R, G, B = averageRGB(i)
         writer.writerow((i, R, G, B))
     csvFile.close()
@@ -103,41 +70,24 @@ def loadCache():
         averages = []
         for row in csvReader:
             locations.append(row[0])
-            # averages.append((int(float(row[1])), int(float(row[2])), int(float(row[3]))))
             averages.append((int(row[1]), int(row[2]), int(row[3])))
-            # averages.append(np.array((int(row[1]), int(row[2]), int(row[3]))))
-        # for i in range(len(locations)):
-        #     print(i)
+
         return locations, averages
 
-def distance(color1, color2):
-    dx = color1[0] - color2[0]
-    dy = color1[1] - color2[1]
-    dz = color1[2] - color2[2]
-    return math.sqrt(dx*dx + dy*dy + dz*dz)
-    # return np.linalg.norm(color1 - color2)
-
-# Todo move loadCache outside of this function. Should only load cache once
 # Todo Basic search for now, might add option for top n cloest as to no reuse images too much
 def closestColor(pix, locations, averages):
-    # locations, averages = loadCache()
-    # min = None
     min = sys.maxsize
     closestLocation = None
     # start = time.time()
     for i in range(len(locations)):
-        # if distance(pix, averages[i]) < min or min is None:
-        # temp = np.linalg.norm(pix - averages[i])
         dx = pix[0] - averages[i][0]
         dy = pix[1] - averages[i][1]
         dz = pix[2] - averages[i][2]
         temp = math.sqrt(dx*dx + dy*dy + dz*dz)
-        # if distance(pix, averages[i]) < min:
+
         if temp < min:
             min = distance(pix, averages[i])
             closestLocation = locations[i]
-    # end = time.time()
-    # print("closestColor() Runtime: ", end - start)
     return closestLocation
 
 # scaleSize is how much the base image will be scaled down or how much the chunksize of pixel
@@ -154,13 +104,8 @@ def photoMosaicProcess(location, scaleSize, blockSize):
     start = time.time()
     for x in range(imgSmall.width):
         for y in range(imgSmall.height):
-            # USE IMGSMALL YOU DUMB IDIOT
-            # print(closestColor(np.array(imgSmall.getpixel((x,y)))))
-            # closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages)
-            # curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages))
             curImg = Image.open(closestColor(imgSmall.getpixel((x,y)), locations, averages))
             imgBig.paste(curImg, (x * blockSize, y * blockSize))
-            # hello = 0
     end = time.time()
     print("Runtime: ", end - start)
     imgBig.save(defaultOutputPath + "mosaic_" + str(time.time()) + ".png")
@@ -170,53 +115,28 @@ def photoMosaicProcess(location, scaleSize, blockSize):
     # imgBig.save(defaultOutputPath + "big_" + str(time.time()) + ".png")
 
 if __name__ == '__main__':
-    # locations = getAllPaths(sys.argv[1])
-    # blockSize = sys.argv[2]
-    #
-    # numThreads = multiprocessing.cpu_count()
-    #
-    # splitLocations = np.array_split(locations, numThreads)
-    #
-    # if not os.path.exists(imageProcessed):
-    #     os.mkdir(imageProcessed)
-    #
-    # num = 0
-    # p = []
-    # for i in range(numThreads):
-    #     print(i)
-    #     p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, int(blockSize))))
-    #     num += len(splitLocations[i])
-    #     p[i].start()
-    # for i in range(numThreads):
-    #     p[i].join()
-    #
-    # writeCache(imageProcessed)
-    #
-    # photoMosaicProcess(sys.argv[1], blockSize, blockSize)
+    locations = getAllPaths(sys.argv[1])
+    blockSize = sys.argv[2]
 
-    photoMosaicProcess(sys.argv[1], 16, 16)
+    numThreads = multiprocessing.cpu_count()
 
-    # locations, averages = loadCache()
-    # imgTest = Image.open(sys.argv[1]).convert('RGB')
-    # #
-    # start = time.time()
-    # for x in range(50):
-    #     for y in range(50):
-    #         closestColor(np.array(imgTest.getpixel((x,y))), locations, averages)
-    # end = time.time()
-    # print("Runtime: ", end - start)
+    splitLocations = np.array_split(locations, numThreads)
 
-    # testa1 = [5, 10, 15]
-    # testa2 = [80, 100, 200]
-    # testb1 = np.array((5, 10, 15))
-    # testb2 = np.array((80, 100, 200))
-    #
-    # print(testa1)
-    # print(testa2)
-    # print(testb1)
-    # print(testb2)
+    if not os.path.exists(imageProcessed):
+        os.mkdir(imageProcessed)
 
-    # start = time.time()
-    # for x in range(200):
-    #     for y in range(200):
-    #         dx = (testa1)
+    num = 0
+    p = []
+    for i in range(numThreads):
+        print(i)
+        p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, int(blockSize))))
+        num += len(splitLocations[i])
+        p[i].start()
+    for i in range(numThreads):
+        p[i].join()
+
+    writeCache(imageProcessed)
+
+    photoMosaicProcess(sys.argv[1], blockSize, blockSize)
+
+    # photoMosaicProcess(sys.argv[1], 16, 16)
