@@ -142,7 +142,7 @@ def photoMosaicProcess(location, scaleSize, blockSize):
     img = Image.open(location).convert('RGB')
     imgSmall = img.resize((int(img.width / scaleSize), int(img.height / scaleSize)))
     imgBig = imgSmall.resize((int(imgSmall.width * blockSize), int(imgSmall.height * blockSize)))
-    # start = time.time()
+    start = time.time()
     for x in range(imgSmall.width):
         for y in range(imgSmall.height):
             # USE IMGSMALL YOU DUMB IDIOT
@@ -151,8 +151,8 @@ def photoMosaicProcess(location, scaleSize, blockSize):
             curImg = Image.open(closestColor(np.array(imgSmall.getpixel((x,y))), locations, averages))
             imgBig.paste(curImg, (x * blockSize, y * blockSize))
             # hello = 0
-    # end = time.time()
-    # print("Runtime: ", end - start)
+    end = time.time()
+    print("Runtime: ", end - start)
     imgBig.save(defaultOutputPath + "mosaic_" + str(time.time()) + ".png")
 
     # For checking correct scaling
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # p = []
     # for i in range(numThreads):
     #     print(i)
-    #     p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, 64)))
+    #     p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, int(blockSize))))
     #     num += len(splitLocations[i])
     #     p[i].start()
     # for i in range(numThreads):
@@ -184,14 +184,14 @@ if __name__ == '__main__':
     #
     # photoMosaicProcess(sys.argv[1], blockSize, blockSize)
 
-    # photoMosaicProcess(sys.argv[1], 16, 16)
+    photoMosaicProcess(sys.argv[1], 16, 16)
 
-    locations, averages = loadCache()
-    imgTest = Image.open(sys.argv[1]).convert('RGB')
-
-    start = time.time()
-    for x in range(60):
-        for y in range(10):
-            closestColor(np.array(imgTest.getpixel((x,y))), locations, averages)
-    end = time.time()
-    print("Runtime: ", end - start)
+    # locations, averages = loadCache()
+    # imgTest = Image.open(sys.argv[1]).convert('RGB')
+    #
+    # start = time.time()
+    # for x in range(60):
+    #     for y in range(10):
+    #         closestColor(np.array(imgTest.getpixel((x,y))), locations, averages)
+    # end = time.time()
+    # print("Runtime: ", end - start)
