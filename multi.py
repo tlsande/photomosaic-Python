@@ -2,6 +2,8 @@ from PIL import Image
 from os import listdir
 from os.path import isfile, join
 from os import walk
+from tqdm import tqdm
+from tqdm import trange
 import os
 import time
 import numpy as np
@@ -32,7 +34,8 @@ def getBasePaths(directory):
 # Todo Test converting to pool map instead of manually splitting input array
 # Todo Add progress output
 def processImages(locations, num, blockSize):
-    start = time.time()
+    # start = time.time()
+    # for i in tqdm(range(0, len(locations))):
     for i in range(0, len(locations)):
         if locations[i].endswith(('.png', '.jpg', '.gif')):
             img = Image.open(locations[i])
@@ -40,8 +43,8 @@ def processImages(locations, num, blockSize):
 
             path = imageProcessed + "test" + '{:04d}'.format(i + num) + ".png"
             img.save(path)
-    end = time.time()
-    print("Runtime: " + str(end - start))
+    # end = time.time()
+    # print("Runtime: " + str(end - start))
 
 def averageRGB(location):
     img = Image.open(location).convert('RGB')
@@ -86,7 +89,7 @@ def closestColor(pix, locations, averages):
         temp = math.sqrt(dx*dx + dy*dy + dz*dz)
 
         if temp < min:
-            min = distance(pix, averages[i])
+            min = temp
             closestLocation = locations[i]
     return closestLocation
 
@@ -94,6 +97,7 @@ def closestColor(pix, locations, averages):
 # to compare to the source image.
 # blockSize is how big the source images are
 # Todo Add multiprocessing. First test pool map with processImages
+# ToDo Chunking images to add support for crazy high resolution
 def photoMosaicProcess(location, scaleSize, blockSize):
     if not os.path.exists(defaultOutputPath):
         os.mkdir(defaultOutputPath)
@@ -102,7 +106,8 @@ def photoMosaicProcess(location, scaleSize, blockSize):
     imgSmall = img.resize((int(img.width / scaleSize), int(img.height / scaleSize)))
     imgBig = imgSmall.resize((int(imgSmall.width * blockSize), int(imgSmall.height * blockSize)))
     start = time.time()
-    for x in range(imgSmall.width):
+    for x in trange(imgSmall.width, desc='1st loop', leave=True, position=1):
+        # for y in trange(imgSmall.height, desc='2nd loop', leave=True, position=2):
         for y in range(imgSmall.height):
             curImg = Image.open(closestColor(imgSmall.getpixel((x,y)), locations, averages))
             imgBig.paste(curImg, (x * blockSize, y * blockSize))
@@ -115,28 +120,28 @@ def photoMosaicProcess(location, scaleSize, blockSize):
     # imgBig.save(defaultOutputPath + "big_" + str(time.time()) + ".png")
 
 if __name__ == '__main__':
-    locations = getAllPaths(sys.argv[1])
-    blockSize = sys.argv[2]
+    # locations = getAllPaths(sys.argv[1])
+    # blockSize = sys.argv[2]
+    #
+    # numThreads = multiprocessing.cpu_count()
+    #
+    # splitLocations = np.array_split(locations, numThreads)
+    #
+    # if not os.path.exists(imageProcessed):
+    #     os.mkdir(imageProcessed)
+    #
+    # num = 0
+    # p = []
+    # for i in range(numThreads):
+    #     # print(i)
+    #     p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, int(blockSize))))
+    #     num += len(splitLocations[i])
+    #     p[i].start()
+    # for i in range(numThreads):
+    #     p[i].join()
+    #
+    # writeCache(imageProcessed)
 
-    numThreads = multiprocessing.cpu_count()
-
-    splitLocations = np.array_split(locations, numThreads)
-
-    if not os.path.exists(imageProcessed):
-        os.mkdir(imageProcessed)
-
-    num = 0
-    p = []
-    for i in range(numThreads):
-        print(i)
-        p.append(multiprocessing.Process(target=processImages, args=(splitLocations[i], num, int(blockSize))))
-        num += len(splitLocations[i])
-        p[i].start()
-    for i in range(numThreads):
-        p[i].join()
-
-    writeCache(imageProcessed)
-
-    photoMosaicProcess(sys.argv[1], blockSize, blockSize)
+    photoMosaicProcess(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
 
     # photoMosaicProcess(sys.argv[1], 16, 16)
